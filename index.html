@@ -1,0 +1,165 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>CELUEXPRESS</title>
+</head>
+
+<body>
+    <h1>Sistema de facturación (MINI POS)</h1>
+
+    <h2>Tienda</h2>
+    <table border="1" id="tienda"></table>
+    <button onclick="agregarProductoTienda()">Agregar producto a la tienda</button>
+
+    <h2>Carrito</h2>
+    <table border="1" id="carrito"></table>
+    <div id="totales"></div>
+    <button onclick="pagar()">Pagar</button>
+
+    <script>
+        let tienda = [
+            { "id": 1, "nombre": "Infinix GT 30", "precio": 200, "cantidad": 10 },
+            { "id": 2, "nombre": "Iphone 4", "precio": 40, "cantidad": 5 },
+            { "id": 3, "nombre": "Samsung Galaxy S21", "precio": 400, "cantidad": 2 }
+        ];
+
+        let carrito = [];
+
+        function mostrarTienda() {
+            let tabla = "<tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Cantidad</th><th>Acción</th></tr>";
+            for (let i = 0; i < tienda.length; i++) {
+                tabla += "<tr>" +
+                    "<td>" + tienda[i].id + "</td>" +
+                    "<td>" + tienda[i].nombre + "</td>" +
+                    "<td>$" + tienda[i].precio + "</td>" +
+                    "<td>" + tienda[i].cantidad + "</td>" +
+                    "<td><button onclick='agregarProductoCarrito(" + tienda[i].id + ",1)'>Agregar</button></td>" +
+                "</tr>";
+            }
+            document.getElementById("tienda").innerHTML = tabla;
+        }
+
+        function mostrarCarrito() {
+            let tabla = "<tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acción</th></tr>";
+            for (let i = 0; i < carrito.length; i++) {
+                tabla += "<tr>" +
+                    "<td>" + carrito[i].id + "</td>" +
+                    "<td>" + carrito[i].nombre + "</td>" +
+                    "<td>$" + carrito[i].precio + "</td>" +
+                    "<td>" + carrito[i].cantidad + "</td>" +
+                    "<td>$" + calcularSubtotalPorProducto(carrito[i]) + "</td>" +
+                    "<td><button onclick='quitarDelCarrito(" + carrito[i].id + ",1)'>Quitar</button></td>" +
+                "</tr>";
+            }
+            document.getElementById("carrito").innerHTML = tabla;
+        }
+
+        function buscarProductoTienda(id) {
+            return tienda.find(p => p.id === id);
+        }
+
+        function buscarProductoCarrito(id) {
+            return carrito.find(p => p.id === id);
+        }
+
+        function agregarProductoTienda() {
+            let nombre = prompt("Ingrese el nombre del producto");
+            let precio = parseFloat(prompt("Ingrese el precio del producto"));
+            let cantidad = parseInt(prompt("Ingrese la cantidad del producto"));
+
+            if (!nombre || isNaN(precio) || isNaN(cantidad) || precio <= 0 || cantidad <= 0) {
+                alert("Debe ingresar valores válidos");
+                return;
+            }
+
+            let productoNuevo = {
+                "id": tienda.length + 1,
+                "nombre": nombre,
+                "precio": precio,
+                "cantidad": cantidad
+            };
+
+            tienda.push(productoNuevo);
+            actualizarPantalla();
+        }
+
+        function agregarProductoCarrito(id, cantidadAgregar) {
+            let productoEnCarrito = buscarProductoCarrito(id);
+            let productoEnTienda = buscarProductoTienda(id);
+
+            if (productoEnTienda.cantidad - cantidadAgregar < 0) {
+                alert("No hay suficiente stock en la tienda");
+                return;
+            }
+
+            if (productoEnCarrito) {
+                productoEnCarrito.cantidad += cantidadAgregar;
+            } else {
+                const productoNuevo = { ...productoEnTienda };
+                productoNuevo.cantidad = cantidadAgregar;
+                carrito.push(productoNuevo);
+            }
+
+            productoEnTienda.cantidad -= cantidadAgregar;
+            actualizarPantalla();
+        }
+
+        function quitarDelCarrito(id, cantidadQuitar) {
+            let productoEnCarrito = buscarProductoCarrito(id);
+            let productoEnTienda = buscarProductoTienda(id);
+
+            if (productoEnCarrito) {
+                productoEnCarrito.cantidad -= cantidadQuitar;
+                if (productoEnTienda) {
+                    productoEnTienda.cantidad += cantidadQuitar;
+                }
+            }
+
+            if (productoEnCarrito.cantidad <= 0) {
+                carrito = carrito.filter(p => p.id !== id);
+            }
+
+            actualizarPantalla();
+        }
+
+        function calcularSubtotalPorProducto(producto) {
+            return producto.cantidad * producto.precio;
+        }
+
+        function calcularSubtotal() {
+            return carrito.reduce((acc, p) => acc + p.cantidad * p.precio, 0);
+        }
+
+        function calcularIVA() {
+            return calcularSubtotal() * 0.19;
+        }
+
+        function calcularTotal() {
+            return calcularSubtotal() + calcularIVA();
+        }
+
+        function mostrarTotales() {
+            let totalesCadena = `
+                Subtotal general: $${calcularSubtotal()}<br>
+                IVA: $${calcularIVA()}<br>
+                Total general: $${calcularTotal()}<br>
+            `;
+            document.getElementById("totales").innerHTML = totalesCadena;
+        }
+
+        function pagar() {
+            alert("Total a pagar: $" + calcularTotal());
+            carrito = [];
+            actualizarPantalla();
+        }
+
+        function actualizarPantalla() {
+            mostrarTienda();
+            mostrarCarrito();
+            mostrarTotales();
+        }
+
+        actualizarPantalla();
+    </script>
+</body>
